@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ReaderNew — повернення з OpenRouter / Back from OpenRouter</title>
+<!--
+  Сторінка повернення з OAuth OpenRouter (ТЗ, розділ 8). Застосунок відкриває
+  https://openrouter.ai/auth?callback_url=<ця сторінка>&code_challenge=…; після «Authorize» OpenRouter
+  повертає сюди ?code=…&state=…, а сторінка передає їх у застосунок посиланням
+  readernew://oauth/openrouter?code=…&state=… (intent-фільтр у маніфесті ReaderNew). Якщо застосунок
+  не відкрився, користувач копіює код і вставляє його в майстрі. Сторінка нічого не зберігає й нікуди
+  не надсилає. Копія цього файлу лежить у публічному репозиторії readernew-site за шляхом /oauth/openrouter.html.
+-->
+<style>
+  :root { color-scheme: light dark; --bg: #faf7f2; --fg: #2b2520; --muted: #6b6259; --accent: #7a4a1e; --line: #e2d9cc; --card: #fffdf9; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1e1a16; --fg: #ebe4da; --muted: #a79d91; --accent: #d9a46a; --line: #3a322b; --card: #26211c; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, sans-serif; }
+  main { max-width: 36rem; margin: 0 auto; padding: 2rem 1rem 3rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 1rem; }
+  p { margin: .5rem 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: .8rem; padding: 1rem 1.1rem; margin: 1rem 0; }
+  .muted { color: var(--muted); font-size: .95rem; }
+  a.button, button { display: inline-block; background: var(--accent); color: var(--bg); border: 0; border-radius: 2rem; padding: .7rem 1.4rem; font: inherit; text-decoration: none; cursor: pointer; margin: .3rem .3rem .3rem 0; }
+  code { display: block; word-break: break-all; background: var(--bg); border: 1px solid var(--line); border-radius: .5rem; padding: .6rem .8rem; margin: .5rem 0; font-size: 1rem; user-select: all; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ReaderNew</h1>
+
+  <div id="ok" class="hidden">
+    <div class="card">
+      <p lang="uk"><strong>Повертаємося в ReaderNew…</strong> Якщо застосунок не відкрився сам, натисніть кнопку.</p>
+      <p lang="en" class="muted">Returning to ReaderNew… If the app did not open by itself, tap the button.</p>
+      <p><a id="open" class="button" href="#">Відкрити ReaderNew / Open ReaderNew</a></p>
+    </div>
+    <div class="card">
+      <p lang="uk">Або скопіюйте код і вставте його в майстрі підключення («Код з OpenRouter»):</p>
+      <p lang="en" class="muted">Or copy the code and paste it into the setup wizard (“Code from OpenRouter”):</p>
+      <code id="code"></code>
+      <p><button id="copy" type="button">Копіювати код / Copy the code</button> <span id="copied" class="muted"></span></p>
+    </div>
+  </div>
+
+  <div id="missing" class="hidden">
+    <div class="card">
+      <p lang="uk"><strong>Коду немає.</strong> Схоже, вхід в OpenRouter не завершився або ви відмовили в доступі. Поверніться в ReaderNew і натисніть «Увійти в OpenRouter» ще раз.</p>
+      <p lang="en" class="muted"><strong>No code.</strong> The OpenRouter sign-in did not finish, or access was denied. Go back to ReaderNew and tap “Sign in to OpenRouter” again.</p>
+    </div>
+  </div>
+
+  <p class="muted" lang="uk">Ця сторінка нічого не зберігає і нікуди не надсилає: код передається лише застосунку ReaderNew на вашому пристрої.</p>
+  <p class="muted" lang="en">This page stores nothing and sends nothing anywhere: the code is handed only to the ReaderNew app on your device.</p>
+</main>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var code = (params.get("code") || "").trim();
+  var state = (params.get("state") || "").trim();
+  if (!code) { document.getElementById("missing").classList.remove("hidden"); return; }
+  var appLink = "readernew://oauth/openrouter?code=" + encodeURIComponent(code) +
+    (state ? "&state=" + encodeURIComponent(state) : "");
+  document.getElementById("ok").classList.remove("hidden");
+  document.getElementById("code").textContent = code;
+  var open = document.getElementById("open");
+  open.href = appLink;
+  document.getElementById("copy").addEventListener("click", function () {
+    var done = function () { document.getElementById("copied").textContent = "✓"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(code).then(done, done); } else { done(); }
+  });
+  // Спроба відкрити застосунок одразу; якщо схема не зареєстрована, лишається кнопка й код.
+  setTimeout(function () { location.href = appLink; }, 300);
+})();
+</script>
+</body>
+</html>
